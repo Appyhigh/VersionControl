@@ -22,11 +22,11 @@ dependencies {
 
 //Add similar configuration to your firebase remote config:
 
-```json
-
 key: version_control
 type: json
 Example value:
+
+```json
 [
  {
     "package_name": "package_name_flavor_one",
@@ -39,16 +39,14 @@ Example value:
     "current_version": "current_version_flavor_two"
   }
 ]
-
-Logic for updated:
+```
+Logic for update:
 
 /**
 * If BuildVersion < currentVersion && BuildVersion >= criticalVersion -> SOFT_UPDATE
 * if BuildVersion < currentVersion && BuildVersion < CriticalVersion -> HARD_UPDATE
 * else NO_UPDATE
 */
-
-```
 
 // Pass activity context, any view from that activity, your app version code and create a listener and pass it. This listener will help you listen th update type and take actions accordingly
 
