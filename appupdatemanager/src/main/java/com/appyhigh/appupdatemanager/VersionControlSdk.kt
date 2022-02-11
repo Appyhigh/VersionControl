@@ -11,10 +11,12 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.AppUpdateType.FLEXIBLE
 import com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import org.json.JSONArray
+import org.json.JSONObject
 
 @SuppressLint("StaticFieldLeak")
 object VersionControlSdk {
@@ -28,40 +30,71 @@ object VersionControlSdk {
     private var appUpdateManager: AppUpdateManager? = null
     var MY_REQUEST_CODE = 0x121212
     lateinit var view: View
+    private var currentVersion = ""
+    private var criticalVersion = ""
+    private var packageName = ""
+    private lateinit var mFirebaseRemoteConfig: FirebaseRemoteConfig
+    private val TAG = VersionControlSdk::class.java.canonicalName
     var firstRequest = true
     fun initializeSdk(
         context: Activity,
         view: View,
-        currentVersion: String,
-        criticalVersion: String,
         buildVersion: Int,
         versionControlListener: VersionControlListener?
     ) {
-        appUpdateManager = AppUpdateManagerFactory.create(context)
-        this.view = view
-        if (buildVersion < currentVersion.toInt()) {
-            when {
-                buildVersion >= criticalVersion.toInt() -> {
-                    Log.d("initializeSdk", "SOFT_UPDATE")
-                    if (firstRequest) {
-                        checkUpdate(context, FLEXIBLE, versionControlListener)
-                        firstRequest = false
-                    }
-                }
-                buildVersion < criticalVersion.toInt() -> {
-                    Log.d("initializeSdk", "HARD_UPDATE")
-                    checkUpdate(context, IMMEDIATE, versionControlListener)
-                }
-                else -> {
-                    Log.d("initializeSdk", "NO_UPDATE")
-                    versionControlListener?.onUpdateDetectionSuccess(VersionControlConstants.UpdateType.NO_UPDATE)
 
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
+        mFirebaseRemoteConfig.fetchAndActivate()
+            .addOnCompleteListener(context) { task ->
+                if (task.isSuccessful) {
+                    val versionControl =
+                        mFirebaseRemoteConfig.getString(VersionControlConstants.VERSION_CONTROL)
+                    val versionControlArray = JSONArray(versionControl)
+                    (0 until versionControlArray.length()).forEach { i ->
+                        val versionControlJson = versionControlArray.getJSONObject(i)
+                        if (versionControlJson.getString(VersionControlConstants.PACKAGE_NAME) == context.packageName) {
+                            currentVersion =
+                                versionControlJson.getString(VersionControlConstants.CURRENT_VERSION)
+                            criticalVersion =
+                                versionControlJson.getString(VersionControlConstants.CRITICAL_VERSION)
+                            appUpdateManager = AppUpdateManagerFactory.create(context)
+                            this.view = view
+                            if (buildVersion < currentVersion.toInt()) {
+                                when {
+                                    buildVersion >= criticalVersion.toInt() -> {
+                                        Log.d("initializeSdk", "SOFT_UPDATE")
+                                        if (firstRequest) {
+                                            checkUpdate(
+                                                context,
+                                                AppUpdateType.FLEXIBLE, versionControlListener
+                                            )
+                                            firstRequest = false
+                                        }
+                                    }
+                                    buildVersion < criticalVersion.toInt() -> {
+                                        Log.d("initializeSdk", "HARD_UPDATE")
+                                        checkUpdate(context, IMMEDIATE, versionControlListener)
+                                    }
+                                    else -> {
+                                        Log.d("initializeSdk", "NO_UPDATE")
+                                        versionControlListener?.onUpdateDetectionSuccess(
+                                            VersionControlConstants.UpdateType.NO_UPDATE
+                                        )
+
+                                    }
+                                }
+                            } else {
+                                Log.d("initializeSdk", "NO_UPDATE")
+                                versionControlListener?.onUpdateDetectionSuccess(
+                                    VersionControlConstants.UpdateType.NO_UPDATE
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "Config params fetch error")
                 }
             }
-        } else {
-            Log.d("initializeSdk", "NO_UPDATE")
-            versionControlListener?.onUpdateDetectionSuccess(VersionControlConstants.UpdateType.NO_UPDATE)
-        }
     }
 
     private fun checkUpdate(
