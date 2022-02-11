@@ -21,6 +21,8 @@ dependencies {
 ## Initialization
 
 // Pass activity context, any view from that activity, your app version code and create a listener and pass it. This listener will help you listen th update type and take actions accordingly
+
+```kotlin
 VersionControlSdk.initializeSdk(
     this,
     findViewById(R.id.tvhello),
@@ -40,8 +42,11 @@ versionControlListener = object : VersionControlListener {
         }
     }
 }
+```
 
 In your onActivityResult method add this. This is important for Hard Update to work properly:
+
+```kotlin
 if (requestCode == VersionControlSdk.MY_REQUEST_CODE) {
     if (resultCode != RESULT_OK) {
         VersionControlSdk.initializeSdk(
@@ -52,5 +57,5 @@ if (requestCode == VersionControlSdk.MY_REQUEST_CODE) {
         )
     }
 }
-
+```
 
