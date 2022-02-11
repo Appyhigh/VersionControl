@@ -48,7 +48,7 @@ Logic for update:
 * else NO_UPDATE
 */
 
-Pass activity context, any view from that activity, your app version code and create a listener and pass it. This listener will help you listen th update type and take actions accordingly
+Pass activity context, any view from that activity, your app version code and create a listener as shown below. This listener will help you listen the update type and take actions accordingly
 
 ```kotlin
 VersionControlSdk.initializeSdk(
