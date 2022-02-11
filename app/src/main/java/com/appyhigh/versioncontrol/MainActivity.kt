@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.appyhigh.appupdatemanager.VersionControlConstants
 import com.appyhigh.appupdatemanager.VersionControlListener
+import com.appyhigh.appupdatemanager.VersionControlSdk
 
 class MainActivity : AppCompatActivity() {
     private var versionControlListener: VersionControlListener? = null
@@ -24,7 +25,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        com.appyhigh.appupdatemanager.VersionControlSdk.initializeSdk(
+        VersionControlSdk.initializeSdk(
             this,
             findViewById(R.id.tvhello),
             BuildConfig.VERSION_CODE,
@@ -35,9 +36,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == com.appyhigh.appupdatemanager.VersionControlSdk.MY_REQUEST_CODE) {
+        if (requestCode == VersionControlSdk.MY_REQUEST_CODE) {
             if (resultCode != RESULT_OK) {
-                com.appyhigh.appupdatemanager.VersionControlSdk.initializeSdk(
+                VersionControlSdk.initializeSdk(
                     this,
                     findViewById(R.id.tvhello),
                     BuildConfig.VERSION_CODE,

@@ -42,59 +42,63 @@ object VersionControlSdk {
         buildVersion: Int,
         versionControlListener: VersionControlListener?
     ) {
+        try {
 
-        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
-        mFirebaseRemoteConfig.fetchAndActivate()
-            .addOnCompleteListener(context) { task ->
-                if (task.isSuccessful) {
-                    val versionControl =
-                        mFirebaseRemoteConfig.getString(VersionControlConstants.VERSION_CONTROL)
-                    val versionControlArray = JSONArray(versionControl)
-                    (0 until versionControlArray.length()).forEach { i ->
-                        val versionControlJson = versionControlArray.getJSONObject(i)
-                        if (versionControlJson.getString(VersionControlConstants.PACKAGE_NAME) == context.packageName) {
-                            currentVersion =
-                                versionControlJson.getString(VersionControlConstants.CURRENT_VERSION)
-                            criticalVersion =
-                                versionControlJson.getString(VersionControlConstants.CRITICAL_VERSION)
-                            appUpdateManager = AppUpdateManagerFactory.create(context)
-                            this.view = view
-                            if (buildVersion < currentVersion.toInt()) {
-                                when {
-                                    buildVersion >= criticalVersion.toInt() -> {
-                                        Log.d("initializeSdk", "SOFT_UPDATE")
-                                        if (firstRequest) {
-                                            checkUpdate(
-                                                context,
-                                                AppUpdateType.FLEXIBLE, versionControlListener
+            mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
+            mFirebaseRemoteConfig.fetchAndActivate()
+                .addOnCompleteListener(context) { task ->
+                    if (task.isSuccessful) {
+                        val versionControl =
+                            mFirebaseRemoteConfig.getString(VersionControlConstants.VERSION_CONTROL)
+                        val versionControlArray = JSONArray(versionControl)
+                        (0 until versionControlArray.length()).forEach { i ->
+                            val versionControlJson = versionControlArray.getJSONObject(i)
+                            if (versionControlJson.getString(VersionControlConstants.PACKAGE_NAME) == context.packageName) {
+                                currentVersion =
+                                    versionControlJson.getString(VersionControlConstants.CURRENT_VERSION)
+                                criticalVersion =
+                                    versionControlJson.getString(VersionControlConstants.CRITICAL_VERSION)
+                                appUpdateManager = AppUpdateManagerFactory.create(context)
+                                this.view = view
+                                if (buildVersion < currentVersion.toInt()) {
+                                    when {
+                                        buildVersion >= criticalVersion.toInt() -> {
+                                            Log.d("initializeSdk", "SOFT_UPDATE")
+                                            if (firstRequest) {
+                                                checkUpdate(
+                                                    context,
+                                                    AppUpdateType.FLEXIBLE, versionControlListener
+                                                )
+                                                firstRequest = false
+                                            }
+                                        }
+                                        buildVersion < criticalVersion.toInt() -> {
+                                            Log.d("initializeSdk", "HARD_UPDATE")
+                                            checkUpdate(context, IMMEDIATE, versionControlListener)
+                                        }
+                                        else -> {
+                                            Log.d("initializeSdk", "NO_UPDATE")
+                                            versionControlListener?.onUpdateDetectionSuccess(
+                                                VersionControlConstants.UpdateType.NO_UPDATE
                                             )
-                                            firstRequest = false
+
                                         }
                                     }
-                                    buildVersion < criticalVersion.toInt() -> {
-                                        Log.d("initializeSdk", "HARD_UPDATE")
-                                        checkUpdate(context, IMMEDIATE, versionControlListener)
-                                    }
-                                    else -> {
-                                        Log.d("initializeSdk", "NO_UPDATE")
-                                        versionControlListener?.onUpdateDetectionSuccess(
-                                            VersionControlConstants.UpdateType.NO_UPDATE
-                                        )
-
-                                    }
+                                } else {
+                                    Log.d("initializeSdk", "NO_UPDATE")
+                                    versionControlListener?.onUpdateDetectionSuccess(
+                                        VersionControlConstants.UpdateType.NO_UPDATE
+                                    )
                                 }
-                            } else {
-                                Log.d("initializeSdk", "NO_UPDATE")
-                                versionControlListener?.onUpdateDetectionSuccess(
-                                    VersionControlConstants.UpdateType.NO_UPDATE
-                                )
                             }
                         }
+                    } else {
+                        Log.e(TAG, "Config params fetch error")
                     }
-                } else {
-                    Log.e(TAG, "Config params fetch error")
                 }
-            }
+        }catch (e:Exception){
+            e.printStackTrace()
+        }
     }
 
     private fun checkUpdate(
