@@ -4,21 +4,51 @@ In your project level  `build.gradle`:
 
 ```groovy
 allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
 	}
+}
 ```
 
 In your app level `build.gradle`:
 
 ```groovy
 dependencies {
-	 implementation 'com.github.Appyhigh:VersionControl:1.0.3'
+ implementation 'com.github.Appyhigh:VersionControl:1.0.3'
 }
 ```
 ## Initialization
+
+//Add similar configuration to your firebase remote config:
+
+```json
+
+key: version_control
+type: json
+Example value:
+[
+ {
+    "package_name": "package_name_flavor_one",
+    "critical_version": "critical_version_flavor_one",
+    "current_version": "current_version_flavor_one"
+  },
+  {
+   "package_name": "package_name_flavor_two",
+    "critical_version": "critical_version_flavor_two",
+    "current_version": "current_version_flavor_two"
+  }
+]
+
+Logic for updated:
+
+/**
+* If BuildVersion < currentVersion && BuildVersion >= criticalVersion -> SOFT_UPDATE
+* if BuildVersion < currentVersion && BuildVersion < CriticalVersion -> HARD_UPDATE
+* else NO_UPDATE
+*/
+
+```
 
 // Pass activity context, any view from that activity, your app version code and create a listener and pass it. This listener will help you listen th update type and take actions accordingly
 
